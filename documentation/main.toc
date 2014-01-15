@@ -1,0 +1,3 @@
+\select@language {polish}
+\contentsline {section}{\numberline {1}First section}{3}
+\contentsline {subsection}{\numberline {1.1}A subsection}{3}
