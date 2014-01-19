@@ -1,30 +1,81 @@
 ﻿<html>
 <header>
 <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-2" >
-
-Wizualizacja scen 3D w przeglądarce internetowej
-
 </header>
 
 <!-- dependencies import -->
 <script type = "text/javascript" src = "dependencies/webgl-utils.js"></script>
-<script type = "text/javascript" src = "webgl-utils.js"></javascript>
+<script type = "text/javascript" src = "dependencies/gl-matrix-min.js"></script>
 
-<!-- shaders import -->
-<script id = "shader-fs" type = "x-shader/x-fragment" src = "shaders/fragmentShader.js"></script>
-<script id = "shader-vs" type = "x-shader/x-vertex" src = "shaders/vertexShader.js"></script>
+<!-- shaders -->
+<script id = "shader-fs" type = "x-shader/x-fragment">
+	precision mediump float;
+	
+	varying vec4 vColor;
+	
+	
+	void main(void){
+		gl_FragColor = vColor;
+	}
+</script>
+<script id = "shader-vs" type = "x-shader/x-vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec4 aVertexColor;
+	
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	
+	varying vec4 vColor;
+	
+	void main(void){
+		gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		vColor = aVertexColor;
+	}
+</script>
 
 <!-- objects import -->
-<script type = "text/javascript" src = "objects/ballObject.js"></script>
-<script type = "text/javascript" src = "objects/wallObject.js"></script>
+<script type = "text/javascript" src = "objects/SphereObject.js"></script>
+<script type = "text/javascript" src = "objects/WallObject.js"></script>
 
 <!-- main -->
+<script type = "text/javascript" src = "MainScene.js"></script>
 <script type = "text/javascript" src = "main.js"></script>
 
 <body onload = "onLoad();">
 
-<!-- Canvas -->
-<canvas id = "canvasID" style = "border: none;" width = "500" height = "500">
+	<!-- Canvas -->
+	<canvas id = "canvasID" style = "border: none;" width = "800" height = "600"></canvas>
 
+	<!-- Panel -->
+	<h2>Add linear velocity vector:</h2>
+
+    <table style="border: 0; padding: 10px;">
+        <tr>
+            <td>X: <input type="text" id="directionX" value="5" />
+            <td>Y: <input type="text" id="directionY" value="-2" />
+            <td>Z: <input type="text" id="directionZ" value="-1.0" />
+        </tr>
+        <tr>
+        	<td><input id="hitLinearButton" type = "button" value = "HIT!" onclick = "onButtonLinearHit();" />
+			<td><input id="stopLinearButton" type="button" value="STOP" onclick="onButtonLinearStop();" />
+		</tr>
+    </table>
+    
+    <h2>Add angular velocity vector:</h2>
+
+    <table style="border: 0; padding: 10px;">
+        <tr>
+            <td>X: <input type="text" id="angleX" value="30" />
+            <td>Y: <input type="text" id="angleY" value="-45" />
+            <td>Z: <input type="text" id="angleZ" value="60" />
+        </tr>
+        <tr>
+        	<td><input id="hitAngularButton" type = "button" value = "HIT!" onclick = "onButtonAngularHit();" />
+			<td><input id="stopAngularButton" type="button" value="STOP" onclick="onButtonAngularStop();" />
+		</tr>
+    </table>
+	
+	
+	
 </body>
 </html>
