@@ -23,9 +23,9 @@ function SphereObject(latitudeBands, longitudeBands, radius, position, gl){
 	this.positionY = position[1];
 	this.positionZ = position[2];
 
-	this.velocityX = 1;
-	this.velocityY = 1.2;
-	this.velocityZ = 1.4;
+	this.velocityX = position[0]/2;
+	this.velocityY = position[1]/2;
+	this.velocityZ = position[2]/2;
 	
 
 
@@ -83,4 +83,4 @@ function SphereObject(latitudeBands, longitudeBands, radius, position, gl){
 
 //constants
 SphereObject.velocityConstant = 1000;
-SphereObject.defaultColor = [1.0, 0.0, 1.0, 1.0];
+SphereObject.defaultColor = [1.0, 0.0, 1.0, 0.3];

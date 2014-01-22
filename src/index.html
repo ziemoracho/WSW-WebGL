@@ -1,6 +1,11 @@
 ﻿<html>
 <header>
 <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-2" >
+
+<style type="text/css" media="screen">
+	canvas { background:url(bg.png)}
+</style>
+
 </header>
 
 <!-- dependencies import -->
@@ -41,12 +46,127 @@
 <script type = "text/javascript" src = "MainScene.js"></script>
 <script type = "text/javascript" src = "main.js"></script>
 
-<body onload = "onLoad();">
+<body>
 
 	<!-- Canvas -->
-	<canvas id = "canvasID" style = "border: none;" width = "800" height = "600"></canvas>
+	<canvas id = "canvasID" width = "656" height = "492"></canvas>
 
 	<!-- Panel -->
+	</br>
+	<input type = "button" id = "reload3DStructureButton" value = "Reload 3D structure" onclick = "onReload3DStructureButton(null);"/>	
+	<input type = "button" id = "startAnimationButton" value = "Start animation" onclick = "onStartAnimationButton();"/>
+	
+	<h2>Specify vertices:</h2>
+	
+	<table style = "border: 0; padding: 10px;">
+		<tr>
+			<td>left top far
+			<td>X: <input type = "text" id = "verticeFirstX" value = "2850"/>
+			<td>Y: <input type = "text" id = "verticeFirstY" value = "2250"/>
+			<td>Z: <input type = "text" id = "verticeFirstZ" value = "7000"/>
+		</tr>
+		<tr>
+			<td>right top far
+			<td>X: <input type = "text" id = "verticeSecondX" value = "-150"/>
+			<td>Y: <input type = "text" id = "verticeSecondY" value = "2250"/>
+			<td>Z: <input type = "text" id = "verticeSecondZ" value = "7000"/>
+		</tr>
+		<tr>
+			<td>right bottom far
+			<td>X: <input type = "text" id = "verticeThirdX" value = "-150"/>
+			<td>Y: <input type = "text" id = "verticeThirdY" value = "-50"/>
+			<td>Z: <input type = "text" id = "verticeThirdZ" value = "7000"/>
+		</tr>
+		<tr>
+			<td>left bottom far
+			<td>X: <input type = "text" id = "verticeFourthX" value = "2850"/>
+			<td>Y: <input type = "text" id = "verticeFourthY" value = "-50"/>
+			<td>Z: <input type = "text" id = "verticeFourthZ" value = "7000"/>
+		</tr>
+		<tr>
+			<td>left top near
+			<td>X: <input type = "text" id = "verticeFifthX" value = "2850"/>
+			<td>Y: <input type = "text" id = "verticeFifthY" value = "2250"/>
+			<td>Z: <input type = "text" id = "verticeFifthZ" value = "-3000"/>
+		</tr>
+		<tr>
+			<td>right top near
+			<td>X: <input type = "text" id = "verticeSixthX" value = "-150"/>
+			<td>Y: <input type = "text" id = "verticeSixthY" value = "2250"/>
+			<td>Z: <input type = "text" id = "verticeSixthZ" value = "-3000"/>
+		</tr>
+		<tr>
+			<td>right bottom near
+			<td>X: <input type = "text" id = "verticeSeventhX" value = "-150"/>
+			<td>Y: <input type = "text" id = "verticeSeventhY" value = "-50"/>
+			<td>Z: <input type = "text" id = "verticeSeventhZ" value = "-3000"/>
+		</tr>
+		<tr>
+			<td>left bottom near
+			<td>X: <input type = "text" id = "verticeEighthX" value = "2850"/>
+			<td>Y: <input type = "text" id = "verticeEighthY" value = "-50"/>
+			<td>Z: <input type = "text" id = "verticeEighthZ" value = "-3000"/>
+		</tr>
+	</table>
+	
+	Point size:<input type = "text" id = "pointSize" value = "55"/>
+	
+	<h2>Specify camera parameters:</h2>
+	Alpha:<input type = "text" id = "cameraAlpha" value = "618.69"/>
+    Beta:<input type = "text" id = "cameraBeta" value = "618.69"/>
+    Center Pixel X:<input type = "text" id = "cameraPixelX" value = "328"/>
+    Center Pixel Y:<input type = "text" id = "cameraPixelY" value = "246"/>
+    Nearest distance:<input type = "text" id = "nearestDistance" value = "100"/>
+    Farthest distance:<input type = "text" id = "farthestDistance" value = "20000"/>
+	
+	<h2>Specify point of reference:</h2>
+	<table style = "border: 0; padding: 10px;">
+		<tr>
+			<td>Translation
+			<td>X: <input type = "text" id = "translationX" value = "1405.9"/>
+			<td>Y: <input type = "text" id = "translationY" value = "956.2"/>
+			<td>Z: <input type = "text" id = "translationZ" value = "4175.1"/>
+		</tr>
+		<tr>
+			<td>Rotation
+			<td>X
+			<td>Y
+			<td>Z
+		</tr>
+		<tr>
+			<td>X
+			<td><input type = "text" id = "rotationXX" value = "-0.9364"/>
+			<td><input type = "text" id = "rotationXY" value = "0.0379"/>
+			<td><input type = "text" id = "rotationXZ" value = "-0.3489"/>
+		</tr>
+		<tr>
+			<td>Y
+			<td><input type = "text" id = "rotationYX" value = "0.0636"/>
+			<td><input type = "text" id = "rotationYY" value = "-0.9594"/>
+			<td><input type = "text" id = "rotationYZ" value = "-0.2747"/>		
+		</tr>
+		<tr>
+			<td>Z
+			<td><input type = "text" id = "rotationZX" value = "-0.3452"/>
+			<td><input type = "text" id = "rotationZY" value = "-0.2794"/>
+			<td><input type = "text" id = "rotationZZ" value = "0.8960"/>		
+		</tr>		
+	</table>
+	
+	<h2>Specify sphere object properties</h2>
+	
+	X:<input type = "text" id = "sphereX" value = "1500">
+	Y:<input type = "text" id = "sphereY" value = "1150">
+	Z:<input type = "text" id = "sphereZ" value = "3500">
+	R:<input type = "text" id = "sphereR" value = "150">
+	
+	<h2>Load background image:</h2>
+    
+    <input type = "file" id = "fileId"/>
+    Image Width:<input type = "text" id = "imageWidth" value = "656"/>
+    Image Height:<input type = "text" id = "imageHeight" value = "492"/>
+    <input type = "button" value = "Reload canvas" onclick = "onFileLoad();"/>
+	
 	<h2>Add linear velocity vector:</h2>
 
     <table style="border: 0; padding: 10px;">
@@ -74,8 +194,6 @@
 			<td><input id="stopAngularButton" type="button" value="STOP" onclick="onButtonAngularStop();" />
 		</tr>
     </table>
-	
-	
-	
+    
 </body>
 </html>

@@ -1,6 +1,15 @@
-function MainScene(){
+function MainScene(cameraParameters, mainVertices, pointSize, sphereParameters){
 	//gl instance
 	var gl;
+	
+	//parameters
+	var mainVertices = mainVertices;
+	var cameraParameters = cameraParameters;
+	var pointSize = pointSize;
+	var sphereParameters = sphereParameters;
+	
+	var canvasWidth;
+	var canvasHeight;
 	
 	//shader program
 	var shaderProgram;
@@ -9,10 +18,13 @@ function MainScene(){
 	var mvMatrix = [];
 	var pMatrix = [];
 	var mvMatrixStack = [];
+	var mvMatrixBase = [];
+	var rotationMatrix = [];
 	
 	//objects
 	var sphere;
 	var walls = [];
+	var pointSpheres = [];
 	
 	//timer
 	var lastTime = 0;
@@ -22,21 +34,67 @@ function MainScene(){
 	
 	//flags
 	var lightIndicator = false;
+	var animationOnline = false;
+	
+	if(sphereParameters != null){
+		animationOnline = true;
+	}
 	
 	this.execute = function (){
 		var canvas = document.getElementById("canvasID");
 		initGL(canvas);
-		initObjects();
+		prepareCamera();
+		init3DScene();
 		initShaders();
-		initBuffers();
+		init3DSceneBuffers();
 		
-		gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		gl.clearColor(0.0, 0.0, 0.0, 0.3);
+		//gl.enable(gl.CULL_FACE);
 		gl.enable(gl.DEPTH_TEST);
+		//gl.depthMask(gl.TRUE);
 		
 		document.onkeydown = handleKeyDown;
 	    document.onkeyup = handleKeyUp;
-		onTick();
+	    
+	    onTick();
 	}
+	
+	var prepareCamera = function(){
+		var cameraMatrix = [];
+		var projectionMatrix = [];
+		
+		
+		quat.fromMat3(rotationMatrix, cameraParameters.rotation);
+		
+		mat4.fromRotationTranslation(mvMatrixBase, rotationMatrix, cameraParameters.translation);
+		
+		mat4.ortho(projectionMatrix, 0, canvasWidth, canvasHeight, 0, cameraParameters.nearestDistance, cameraParameters.farthestDistance);
+		
+		cameraMatrix = mat4.create();
+		cameraMatrix[0] = cameraParameters.alpha;
+		cameraMatrix[1] = 0;
+		cameraMatrix[2] = 0;
+		cameraMatrix[3] = 0;	
+		
+		cameraMatrix[4] = 0;
+		cameraMatrix[5] = cameraParameters.beta;
+		cameraMatrix[6] = 0;
+		cameraMatrix[7] = 0;
+			
+		cameraMatrix[8] = cameraParameters.pixelX;
+		cameraMatrix[9] = cameraParameters.pixelY;
+		cameraMatrix[10] = -(cameraParameters.nearestDistance+cameraParameters.farthestDistance);
+		cameraMatrix[11] = 1;
+			
+		cameraMatrix[12] = 0;
+		cameraMatrix[13] = 0;
+		cameraMatrix[14] = cameraParameters.nearestDistance*cameraParameters.farthestDistance;
+		cameraMatrix[15] = 0;
+		
+		mat4.multiply(pMatrix, projectionMatrix, cameraMatrix);
+		
+	}
+	
 	
 	this.onButtonLinearStop = function(){
 		sphere.velocityX = 0;
@@ -65,7 +123,10 @@ function MainScene(){
 		requestAnimFrame(onTick);
 		drawScene();
 		handleKeys();	
-		animate();
+		if(animationOnline == true)
+		{
+			animate();
+		}
 	}
 	
 	var animate = function(){
@@ -87,7 +148,7 @@ function MainScene(){
 	
 	var checkCollisionWith = function(wall){
 		lightIndicator = false;
-		if(wall.vertexPositionData[wall.constantIndex] < 0)
+		if(wall.vertexPositionData[wall.constantIndex] <= 0)
 		{
 			switch(wall.constantIndex){
 			case 0:
@@ -150,22 +211,41 @@ function MainScene(){
 		
 	}
 
-	var initBuffers = function(){
-		initSphereBuffers();
+	var init3DSceneBuffers = function(){
 		initWallBuffers();
+		initPointSpheresBuffers();
+		if(animationOnline == true){
+			prepareBuffers(sphere);
+		}
+		
 	}
+	
+	var initPointSpheresBuffers = function(){
+		for(var i = 0; i < pointSpheres.length; i++){
+			prepareBuffers(pointSpheres[i]);
+		}
+	}
+	
+	
 	
 	var drawScene = function(){
 		prepareScene();
 		
-		mat4.identity(mvMatrix);
+		for(var i = 0; i < pointSpheres.length; i++){
+			mat4.copy(mvMatrix, mvMatrixBase);
+			drawSphere(pointSpheres[i]);	
+		}
 		
-		drawSphere();
-		
-		mat4.identity(mvMatrix);
-		for(var i = 0; i < walls.length; i++){
-			drawWall(walls[i]);
-		}	
+		if(animationOnline == true)
+		{
+			mat4.copy(mvMatrix, mvMatrixBase);
+			drawSphere(sphere);
+			
+			mat4.copy(mvMatrix, mvMatrixBase);
+			for(var i = 0; i < walls.length; i++){
+				drawWall(walls[i]);
+			}
+		}
 	}
 	
 	var drawWall = function(wall){
@@ -183,8 +263,13 @@ function MainScene(){
 	}
 	
 	
-	var drawSphere = function(){
-		mat4.translate(mvMatrix, mvMatrix, [sphere.positionX, sphere.positionY, sphere.positionZ]);
+	var drawSphere = function(sphere){
+		var translation = vec3.create();
+		
+		mvMatrixPush();
+		vec3.transformQuat(translation, [sphere.positionX, sphere.positionY, sphere.positionZ], rotationMatrix);
+		mat4.translate(mvMatrix, mvMatrix, translation);
+		
 		
 		gl.bindBuffer(gl.ARRAY_BUFFER, sphere.vertexPositionBuffer);
 		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, sphere.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -194,7 +279,6 @@ function MainScene(){
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphere.vertexIndexBuffer);
 
-		mvMatrixPush();
 		mat4.rotate(mvMatrix, mvMatrix, degToRad(sphere.rotationX), [1, 0, 0]);
 		mat4.rotate(mvMatrix, mvMatrix, degToRad(sphere.rotationY), [0, 1, 0]);
 		mat4.rotate(mvMatrix, mvMatrix, degToRad(sphere.rotationZ), [0, 0, 1]);
@@ -210,13 +294,6 @@ function MainScene(){
 	var prepareScene = function(){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-		mat4.perspective(pMatrix, 45*Math.PI/180, gl.viewportWidth / gl.viewportHeight, 0.1	, 100.0);
-	}
-	
-	
-	var initSphereBuffers = function(){
-		sphere.evaluateVertexBuffers();
-		prepareBuffers(sphere);
 	}
 	
 	var prepareBuffers = function(object){
@@ -275,37 +352,55 @@ function MainScene(){
 		}
 	}
 	
+	var init3DScene = function(){
+		initWalls();
+		initPointSpheres();
+		if(animationOnline == true)
+		{
+			initSphere();
+		}
+		
+	}
 	
-	var initObjects = function(){
-		sphere = new SphereObject(30, 30, 0.2, [0, 0, -7.0], gl);
-		sphere.evaluateVertexBuffers();
+	var initPointSpheres = function(){
+		for(var i = 0; i < mainVertices.length; i++){
+			pointSpheres[i] = new SphereObject(30, 30, pointSize, [mainVertices[i][0], mainVertices[i][1], mainVertices[i][2]], gl);
+			pointSpheres[i].evaluateVertexBuffers();
+		}
+	}
+	
+	var initWalls = function(){
 		
-		walls[0] = new WallObject([-2.0, 2.0, 0.0,
-		                           -2.0, 2.0, -10.0,
-		                           -2.0, -2.0, -10.0,
-		                           -2.0, -2.0, 0.0], [1.0, 1.0, 0.0, 0.75], gl, 0);
-		walls[1] = new WallObject([-2.0, 2.0, -10.0,
-		                           2.0, 2.0, -10.0,
-		                           2.0, -2.0, -10.0,
-		                           -2.0, -2.0, -10.0], [0.0, 1.0, 1.0, 0.75], gl, 2);
-		walls[2] = new WallObject([2.0, 2.0, -10.0,
-		                           2.0, 2.0, 0.0,
-		                           2.0, -2.0, 0.0,
-		                           2.0, -2.0, -10.0], [1.0, 0.0, 0.0, 0.75], gl, 0);
-		walls[3] = new WallObject([-2.0, 2.0, 0.0,
-		                           -2.0, 2.0, -10.0,
-		                           2.0, 2.0, -10.0,
-		                           2.0, 2.0, 0.0], [0.0, 1.0, 0.0, 0.75], gl, 1);
-		walls[4] = new WallObject([-2.0, -2.0, 0.0,
-		                           -2.0, -2.0, -10.0,
-		                           2.0, -2.0, -10.0,
-		                           2.0, -2.0, 0.0], [0.0, 0.0, 1.0, 0.75], gl, 1);
-		walls[5] = new WallObject([-2.0, 2.0, 0.0,
-		                           2.0, 2.0, 0.0,
-		                           2.0, -2.0, 0.0,
-		                           -2.0, -2.0, 0.0], [1.0, 0.0, 1.0, 0.75], gl, 2);		
-		
-		                           
+		walls[0] = new WallObject([mainVertices[4][0], mainVertices[4][1], mainVertices[4][2],
+		                           mainVertices[0][0], mainVertices[0][1], mainVertices[0][2],
+		                           mainVertices[3][0], mainVertices[3][1], mainVertices[3][2],
+		                           mainVertices[7][0], mainVertices[7][1], mainVertices[7][2]], gl, 0);
+		walls[1] = new WallObject([mainVertices[0][0], mainVertices[0][1], mainVertices[0][2],
+		                           mainVertices[1][0], mainVertices[1][1], mainVertices[1][2],
+		                           mainVertices[2][0], mainVertices[2][1], mainVertices[2][2],
+		                           mainVertices[3][0], mainVertices[3][1], mainVertices[3][2]], gl, 2);
+		walls[2] = new WallObject([mainVertices[1][0], mainVertices[1][1], mainVertices[1][2],
+		                           mainVertices[5][0], mainVertices[5][1], mainVertices[5][2],
+		                           mainVertices[6][0], mainVertices[6][1], mainVertices[6][2],
+		                           mainVertices[2][0], mainVertices[2][1], mainVertices[2][2]], gl, 0);
+		walls[3] = new WallObject([mainVertices[4][0], mainVertices[4][1], mainVertices[4][2],
+		                           mainVertices[5][0], mainVertices[5][1], mainVertices[5][2],
+		                           mainVertices[6][0], mainVertices[6][1], mainVertices[6][2],
+		                           mainVertices[7][0], mainVertices[7][1], mainVertices[7][2]], gl, 2);
+		walls[4] = new WallObject([mainVertices[7][0], mainVertices[7][1], mainVertices[7][2],
+		                           mainVertices[3][0], mainVertices[3][1], mainVertices[3][2],
+		                           mainVertices[2][0], mainVertices[2][1], mainVertices[2][2],
+		                           mainVertices[6][0], mainVertices[6][1], mainVertices[6][2]], gl, 1);
+		walls[5] = new WallObject([mainVertices[4][0], mainVertices[4][1], mainVertices[4][2],
+		                           mainVertices[0][0], mainVertices[0][1], mainVertices[0][2],
+		                           mainVertices[1][0], mainVertices[1][1], mainVertices[1][2],
+		                           mainVertices[5][0], mainVertices[5][1], mainVertices[5][2]], gl, 1);		
+	}
+	
+	
+	var initSphere = function(){
+		sphere = new SphereObject(30, 30, sphereParameters.radius, [sphereParameters.position[0], sphereParameters.position[1], sphereParameters.position[2]], gl);
+		sphere.evaluateVertexBuffers();          
 	}
 	
 	var initGL = function(canvas){
@@ -313,6 +408,8 @@ function MainScene(){
 			gl = canvas.getContext("experimental-webgl");
 			gl.viewportWidth = canvas.width;
 			gl.viewportHeight = canvas.height;
+			canvasWidth = canvas.width;
+			canvasHeight = canvas.height;
 		}
 		catch(e){
 		}

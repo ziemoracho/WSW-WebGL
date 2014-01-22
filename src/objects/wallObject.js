@@ -1,4 +1,4 @@
-function WallObject(vertices, color, gl, constantIndex){
+function WallObject(vertices, gl, constantIndex){
 	this.vertexPositionBuffer = [];
 	this.vertexColorBuffer = [];
 	this.vertexIndexBuffer = [];
@@ -7,7 +7,6 @@ function WallObject(vertices, color, gl, constantIndex){
 	this.indexData = [0, 1, 2, 0 ,2 ,3];
 	this.vertexPositionData = vertices;
 	this.vertexColorData = [];
-	this.color = color;
 	this.lightChangeIndicator = false;
 	
 	this.isLightened = false;
@@ -15,7 +14,7 @@ function WallObject(vertices, color, gl, constantIndex){
 	this.lighten = function(){
 		if(this.isLightened != true){
 			this.isLightened = true;
-			this.prepareColor(WallObject.defaultColor);
+			this.prepareColor(WallObject.defaultColorLighten);
 			this.lightChangeIndicator = true;
 		}
 	}
@@ -23,7 +22,7 @@ function WallObject(vertices, color, gl, constantIndex){
 	this.unlighten = function(){
 		if(this.isLightened == true){
 			this.isLightened = false;
-			this.prepareColor(this.color);
+			this.prepareColor(WallObject.defaultColorUnlighten);
 			this.lightChangeIndicator = true;
 		}
 		
@@ -40,11 +39,12 @@ function WallObject(vertices, color, gl, constantIndex){
 	}
 	
 	
-	this.prepareColor(this.color);
+	this.prepareColor(WallObject.defaultColorUnlighten);
 	
 }
 
-WallObject.defaultColor = [1.0, 1.0, 1.0, 0.2];
+WallObject.defaultColorUnlighten = [0.0, 0.0, 0.0, 0.05];
+WallObject.defaultColorLighten = [1.0, 0.0, 0.0, 0.3];
 
 
 
